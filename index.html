@@ -2,14 +2,53 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Foundry Actor Viewer</title>
-<link rel="stylesheet" href="style.css">
+<title>Foundry Actor Menu</title>
+<style>
+  body { font-family: sans-serif; padding: 20px; }
+  .actor-card { margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; width: 250px; }
+  .actor-card:hover { background: #f0f0f0; cursor: pointer; }
+</style>
 </head>
 <body>
-<h1>Foundry Actor Viewer</h1>
-<select id="actorSelect"></select>
-<div id="sheet"></div>
+<h1>Foundry Actors</h1>
+<div id="actorMenu"></div>
 
-<script src="script.js"></script>
+<script>
+const actorFolder = "foundry-actors/";
+const menuDiv = document.getElementById("actorMenu");
+
+// Load actor list from index.json
+fetch(`${actorFolder}index.json`)
+  .then(res => res.json())
+  .then(actors => {
+    actors.forEach(actor => {
+      const div = document.createElement("div");
+      div.className = "actor-card";
+      div.textContent = actor;
+      div.onclick = () => loadActor(actor);
+      menuDiv.appendChild(div);
+    });
+  })
+  .catch(err => {
+    menuDiv.innerHTML = `<p style="color:red;">Could not load actor list: ${err}</p>`;
+    console.error(err);
+  });
+
+// Function to load actor JSON and render a simple sheet
+function loadActor(name) {
+  fetch(`${actorFolder}${name}.json`)
+    .then(res => res.json())
+    .then(actor => {
+      const html = `
+        <h2>${actor.name}</h2>
+        <ul>
+          ${Object.entries(actor.data.attributes || {}).map(([k,v]) => `<li><strong>${k}:</strong> ${v.value}</li>`).join('')}
+        </ul>
+      `;
+      document.body.innerHTML = `<a href="index.html">← Back to menu</a>${html}`;
+    })
+    .catch(err => console.error(err));
+}
+</script>
 </body>
 </html>
