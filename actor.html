@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Actor Sheet</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  body { font-family: sans-serif; line-height: 1.4; padding: 20px; background: #f5f5f5; }
+  h1 { margin-bottom: 0; }
+  h2 { margin-top: 1em; }
+  .actor-img { width: 150px; border-radius: 10px; }
+  ul { list-style-type: disc; padding-left: 20px; }
+  .section { margin-bottom: 20px; background: #fff; padding: 10px; border-radius: 5px; }
+  a.back { display: inline-block; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<a href="index.html" class="back">← Back to menu</a>
+<div id="actor"></div>
+
+<script>
+// Get actor name from URL query
+const params = new URLSearchParams(window.location.search);
+const actorName = params.get('actor');
+const actorDiv = document.getElementById('actor');
+
+if (!actorName) actorDiv.innerHTML = '<p>No actor selected.</p>';
+
+fetch(`foundry-actors/${actorName}.json`)
+  .then(res => res.json())
+  .then(actor => {
+    let html = `
+      <h1>${actor.name}</h1>
+      ${actor.img ? `<img src="${actor.img}" alt="${actor.name}" class="actor-img">` : ''}
+      
+      <div class="section">
+        <h2>Abilities</h2>
+        <ul>
+          ${Object.entries(actor.system.abilities || {}).map(([k,v]) => `<li><strong>${k.toUpperCase()}:</strong> ${v.value} ${v.proficient ? '(Proficient)' : ''}</li>`).join('')}
+        </ul>
+      </div>
+
+      <div class="section">
+        <h2>Skills</h2>
+        <ul>
+          ${Object.entries(actor.system.skills || {}).map(([k,v]) => `<li><strong>${k.toUpperCase()}:</strong> ${v.value}</li>`).join('')}
+        </ul>
+      </div>
+
+      <div class="section">
+        <h2>HP</h2>
+        <p>${actor.system.attributes.hp?.value || 'N/A'}</p>
+      </div>
+
+      <div class="section">
+        <h2>Biography</h2>
+        ${actor.details?.biography?.value || ''}
+      </div>
+
+      <div class="section">
+        <h2>Alignment / Bonds / Flaws</h2>
+        <p><strong>Ideal:</strong> ${actor.details?.ideal || ''}</p>
+        <p><strong>Bond:</strong> ${actor.details?.bond || ''}</p>
+        <p><strong>Flaw:</strong> ${actor.details?.flaw || ''}</p>
+      </div>
+    `;
+    actorDiv.innerHTML = html;
+  })
+  .catch(err => {
+    actorDiv.innerHTML = `<p style="color:red;">Could not load actor: ${err}</p>`;
+    console.error(err);
+  });
+</script>
+</body>
+</html>
