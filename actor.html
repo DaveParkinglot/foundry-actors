@@ -20,31 +20,44 @@ if (!actorName) {
   fetch(`foundry-actors/${actorName}.json`)
     .then(res => res.json())
     .then(actor => {
+      if (!actor || !actor.system) {
+        actorDiv.innerHTML = "<p style='color:red;'>Actor JSON missing or invalid!</p>";
+        return;
+      }
+
+      const imgUrl = actor.img ? `https://selerim.duckdns.org/${actor.img}` : '';
+
+      // Safe getters
+      const abilities = actor.system.abilities || {};
+      const skills = actor.system.skills || {};
+      const attributes = actor.system.attributes || {};
+      const hp = attributes.hp?.value ?? 0;
+      const ac = attributes.ac?.value ?? 'N/A';
+      const init = attributes.init?.bonus ?? 0;
+      const currency = actor.system.currency || {};
+      const details = actor.details || {};
+
       let html = `<div class="actor-sheet">
         <div class="actor-header">
-          <h1>${actor.name}</h1>
-          ${actor.img ? `<img src="${actor.img}">` : ''}
+          <h1>${actor.name || 'Unknown Actor'}</h1>
+          ${imgUrl ? `<img src="${imgUrl}">` : ''}
         </div>`;
 
       // Abilities
       html += `<div class="section"><h2>Abilities</h2><ul>`;
-      for (const [key, val] of Object.entries(actor.system.abilities || {})) {
-        html += `<li><strong>${key.toUpperCase()}:</strong> ${val.value} ${val.proficient ? '(Proficient)' : ''}</li>`;
+      for (const [key, val] of Object.entries(abilities)) {
+        html += `<li><strong>${key.toUpperCase()}:</strong> ${val?.value ?? 'N/A'} ${val?.proficient ? '(Proficient)' : ''}</li>`;
       }
       html += `</ul></div>`;
 
       // Skills
       html += `<div class="section"><h2>Skills</h2><ul>`;
-      for (const [key, val] of Object.entries(actor.system.skills || {})) {
-        html += `<li><strong>${key.toUpperCase()}:</strong> ${val.value}</li>`;
+      for (const [key, val] of Object.entries(skills)) {
+        html += `<li><strong>${key.toUpperCase()}:</strong> ${val?.value ?? 'N/A'}</li>`;
       }
       html += `</ul></div>`;
 
-      // Attributes: HP, AC, Initiative
-      const hp = actor.system.attributes.hp?.value || 0;
-      const ac = actor.system.attributes.ac?.value || 'N/A';
-      const init = actor.system.attributes.init?.bonus || 0;
-
+      // Attributes
       html += `<div class="section"><h2>Attributes</h2>
         <p><strong>HP:</strong> ${hp}</p>
         <p><strong>AC:</strong> ${ac}</p>
@@ -52,48 +65,21 @@ if (!actorName) {
       </div>`;
 
       // Currency
-      const c = actor.system.currency || {};
       html += `<div class="section"><h2>Currency</h2>
-        <p>${c.pp || 0} pp, ${c.gp || 0} gp, ${c.sp || 0} sp, ${c.cp || 0} cp</p>
+        <p>${currency.pp ?? 0} pp, ${currency.gp ?? 0} gp, ${currency.sp ?? 0} sp, ${currency.cp ?? 0} cp</p>
       </div>`;
 
-      // Biography / alignment / bond / flaw / ideal
-      const details = actor.details || {};
-      html += `<div class="section"><h2>Biography</h2>${details.biography?.value || ''}</div>`;
-
+      // Biography / traits
+      html += `<div class="section"><h2>Biography</h2>${details.biography?.value ?? ''}</div>`;
       html += `<div class="section"><h2>Character Traits</h2>
-        <p><strong>Ideal:</strong> ${details.ideal || ''}</p>
-        <p><strong>Bond:</strong> ${details.bond || ''}</p>
-        <p><strong>Flaw:</strong> ${details.flaw || ''}</p>
-        <p><strong>Alignment:</strong> ${details.alignment || ''}</p>
+        <p><strong>Ideal:</strong> ${details.ideal ?? ''}</p>
+        <p><strong>Bond:</strong> ${details.bond ?? ''}</p>
+        <p><strong>Flaw:</strong> ${details.flaw ?? ''}</p>
+        <p><strong>Alignment:</strong> ${details.alignment ?? ''}</p>
       </div>`;
 
       // Inventory
-      if (actor.items) {
+      if (actor.items && actor.items.length) {
         html += `<div class="section"><h2>Inventory</h2><ul>`;
         actor.items.forEach(item => {
-          html += `<li><strong>${item.name}</strong> (${item.type})</li>`;
-        });
-        html += `</ul></div>`;
-      }
-
-      // Spells
-      if (actor.system.spells) {
-        html += `<div class="section"><h2>Spells</h2><ul>`;
-        for (const [level, spell] of Object.entries(actor.system.spells)) {
-          html += `<li><strong>${level}:</strong> ${spell.value || 0}</li>`;
-        }
-        html += `</ul></div>`;
-      }
-
-      html += `</div>`; // end actor-sheet
-      actorDiv.innerHTML = html;
-    })
-    .catch(err => {
-      actorDiv.innerHTML = `<p style="color:red;">Could not load actor: ${err}</p>`;
-      console.error(err);
-    });
-}
-</script>
-</body>
-</html>
+          htm
