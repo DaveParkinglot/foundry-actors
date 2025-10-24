@@ -3,7 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <title>Actor Sheet</title>
-<link rel="stylesheet" href="style.css">
+<style>
+body { font-family:"Roboto Condensed", sans-serif; background:#1e1e1e; color:#eee; padding:20px; }
+a { color:#6cf; text-decoration:none; }
+.actor-sheet img { max-width:200px; display:block; margin-bottom:10px; }
+.section { margin-bottom:20px; }
+.section h2 { margin-bottom:5px; }
+</style>
 </head>
 <body>
 <a href="index.html">← Back to menu</a>
@@ -18,7 +24,10 @@ if (!actorName) {
   actorDiv.innerHTML = "<p>No actor selected.</p>";
 } else {
   fetch(`foundry-actors/${actorName}.json`)
-    .then(res => res.json())
+    .then(res => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    })
     .then(actor => {
       if (!actor || !actor.system) {
         actorDiv.innerHTML = "<p style='color:red;'>Actor JSON missing or invalid!</p>";
@@ -27,7 +36,6 @@ if (!actorName) {
 
       const imgUrl = actor.img ? `https://selerim.duckdns.org/${actor.img}` : '';
 
-      // Safe getters
       const abilities = actor.system.abilities || {};
       const skills = actor.system.skills || {};
       const attributes = actor.system.attributes || {};
@@ -38,48 +46,45 @@ if (!actorName) {
       const details = actor.details || {};
 
       let html = `<div class="actor-sheet">
-        <div class="actor-header">
-          <h1>${actor.name || 'Unknown Actor'}</h1>
-          ${imgUrl ? `<img src="${imgUrl}">` : ''}
-        </div>`;
+        <h1>${actor.name || 'Unknown Actor'}</h1>
+        ${imgUrl ? `<img src="${imgUrl}">` : ''}`;
 
-      // Abilities
       html += `<div class="section"><h2>Abilities</h2><ul>`;
       for (const [key, val] of Object.entries(abilities)) {
         html += `<li><strong>${key.toUpperCase()}:</strong> ${val?.value ?? 'N/A'} ${val?.proficient ? '(Proficient)' : ''}</li>`;
       }
       html += `</ul></div>`;
 
-      // Skills
       html += `<div class="section"><h2>Skills</h2><ul>`;
       for (const [key, val] of Object.entries(skills)) {
         html += `<li><strong>${key.toUpperCase()}:</strong> ${val?.value ?? 'N/A'}</li>`;
       }
       html += `</ul></div>`;
 
-      // Attributes
       html += `<div class="section"><h2>Attributes</h2>
         <p><strong>HP:</strong> ${hp}</p>
         <p><strong>AC:</strong> ${ac}</p>
         <p><strong>Initiative:</strong> ${init}</p>
       </div>`;
 
-      // Currency
       html += `<div class="section"><h2>Currency</h2>
         <p>${currency.pp ?? 0} pp, ${currency.gp ?? 0} gp, ${currency.sp ?? 0} sp, ${currency.cp ?? 0} cp</p>
       </div>`;
 
-      // Biography / traits
-      html += `<div class="section"><h2>Biography</h2>${details.biography?.value ?? ''}</div>`;
+      html += `<div class="section"><h2>Biography</h2>${system.details.biography?.value ?? ''}</div>`;
       html += `<div class="section"><h2>Character Traits</h2>
-        <p><strong>Ideal:</strong> ${details.ideal ?? ''}</p>
-        <p><strong>Bond:</strong> ${details.bond ?? ''}</p>
-        <p><strong>Flaw:</strong> ${details.flaw ?? ''}</p>
-        <p><strong>Alignment:</strong> ${details.alignment ?? ''}</p>
+        <p><strong>Ideal:</strong> ${system.details.ideal ?? ''}</p>
+        <p><strong>Bond:</strong> ${system.details.bond ?? ''}</p>
+        <p><strong>Flaw:</strong> ${system.details.flaw ?? ''}</p>
+        <p><strong>Alignment:</strong> ${system.details.alignment ?? ''}</p>
       </div>`;
 
-      // Inventory
-      if (actor.items && actor.items.length) {
-        html += `<div class="section"><h2>Inventory</h2><ul>`;
-        actor.items.forEach(item => {
-          htm
+      actorDiv.innerHTML = html;
+    })
+    .catch(err => {
+      actorDiv.innerHTML = `<p style="color:red;">Could not load actor: ${err}</p>`;
+      console.error(err);
+    });
+</script>
+</body>
+</html>
