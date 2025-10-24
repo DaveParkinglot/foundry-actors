@@ -2,30 +2,28 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Foundry Actor Menu</title>
+<title>Actor Menu</title>
 <link rel="stylesheet" href="style.css">
-<style>
-  body { font-family: sans-serif; padding: 20px; }
-  .actor-card { margin: 10px 0; padding: 10px; border: 1px solid #ccc; border-radius: 5px; width: 300px; }
-  .actor-card:hover { background: #f0f0f0; cursor: pointer; }
-</style>
 </head>
 <body>
-<h1>Foundry Actors</h1>
-<div id="actorMenu"></div>
+<h1>Actor Menu</h1>
+<div id="menu"></div>
 
-<script src="script.js"></script>
 <script>
-const actorMenuDiv = document.getElementById('actorMenu');
 fetch('foundry-actors/index.json')
   .then(res => res.json())
-  .then(actors => {
-    actors.forEach(actor => {
+  .then(data => {
+    const menu = document.getElementById('menu');
+    data.forEach(actor => {
       const div = document.createElement('div');
-      div.className = 'actor-card';
       div.textContent = actor;
+      div.style.cursor = 'pointer';
+      div.style.marginBottom = '5px';
+      div.style.padding = '5px';
+      div.style.background = '#2a2a2a';
+      div.style.borderRadius = '4px';
       div.onclick = () => window.location.href = `actor.html?actor=${encodeURIComponent(actor)}`;
-      actorMenuDiv.appendChild(div);
+      menu.appendChild(div);
     });
   });
 </script>

@@ -4,72 +4,96 @@
 <meta charset="UTF-8">
 <title>Actor Sheet</title>
 <link rel="stylesheet" href="style.css">
-<style>
-  body { font-family: sans-serif; line-height: 1.4; padding: 20px; background: #f5f5f5; }
-  h1 { margin-bottom: 0; }
-  h2 { margin-top: 1em; }
-  .actor-img { width: 150px; border-radius: 10px; }
-  ul { list-style-type: disc; padding-left: 20px; }
-  .section { margin-bottom: 20px; background: #fff; padding: 10px; border-radius: 5px; }
-  a.back { display: inline-block; margin-bottom: 10px; }
-</style>
 </head>
 <body>
-<a href="index.html" class="back">← Back to menu</a>
+<a href="index.html">← Back to menu</a>
 <div id="actor"></div>
 
 <script>
-// Get actor name from URL query
 const params = new URLSearchParams(window.location.search);
 const actorName = params.get('actor');
 const actorDiv = document.getElementById('actor');
 
-if (!actorName) actorDiv.innerHTML = '<p>No actor selected.</p>';
+if (!actorName) {
+  actorDiv.innerHTML = "<p>No actor selected.</p>";
+} else {
+  fetch(`foundry-actors/${actorName}.json`)
+    .then(res => res.json())
+    .then(actor => {
+      let html = `<div class="actor-sheet">
+        <div class="actor-header">
+          <h1>${actor.name}</h1>
+          ${actor.img ? `<img src="${actor.img}">` : ''}
+        </div>`;
 
-fetch(`foundry-actors/${actorName}.json`)
-  .then(res => res.json())
-  .then(actor => {
-    let html = `
-      <h1>${actor.name}</h1>
-      ${actor.img ? `<img src="${actor.img}" alt="${actor.name}" class="actor-img">` : ''}
-      
-      <div class="section">
-        <h2>Abilities</h2>
-        <ul>
-          ${Object.entries(actor.system.abilities || {}).map(([k,v]) => `<li><strong>${k.toUpperCase()}:</strong> ${v.value} ${v.proficient ? '(Proficient)' : ''}</li>`).join('')}
-        </ul>
-      </div>
+      // Abilities
+      html += `<div class="section"><h2>Abilities</h2><ul>`;
+      for (const [key, val] of Object.entries(actor.system.abilities || {})) {
+        html += `<li><strong>${key.toUpperCase()}:</strong> ${val.value} ${val.proficient ? '(Proficient)' : ''}</li>`;
+      }
+      html += `</ul></div>`;
 
-      <div class="section">
-        <h2>Skills</h2>
-        <ul>
-          ${Object.entries(actor.system.skills || {}).map(([k,v]) => `<li><strong>${k.toUpperCase()}:</strong> ${v.value}</li>`).join('')}
-        </ul>
-      </div>
+      // Skills
+      html += `<div class="section"><h2>Skills</h2><ul>`;
+      for (const [key, val] of Object.entries(actor.system.skills || {})) {
+        html += `<li><strong>${key.toUpperCase()}:</strong> ${val.value}</li>`;
+      }
+      html += `</ul></div>`;
 
-      <div class="section">
-        <h2>HP</h2>
-        <p>${actor.system.attributes.hp?.value || 'N/A'}</p>
-      </div>
+      // Attributes: HP, AC, Initiative
+      const hp = actor.system.attributes.hp?.value || 0;
+      const ac = actor.system.attributes.ac?.value || 'N/A';
+      const init = actor.system.attributes.init?.bonus || 0;
 
-      <div class="section">
-        <h2>Biography</h2>
-        ${actor.details?.biography?.value || ''}
-      </div>
+      html += `<div class="section"><h2>Attributes</h2>
+        <p><strong>HP:</strong> ${hp}</p>
+        <p><strong>AC:</strong> ${ac}</p>
+        <p><strong>Initiative:</strong> ${init}</p>
+      </div>`;
 
-      <div class="section">
-        <h2>Alignment / Bonds / Flaws</h2>
-        <p><strong>Ideal:</strong> ${actor.details?.ideal || ''}</p>
-        <p><strong>Bond:</strong> ${actor.details?.bond || ''}</p>
-        <p><strong>Flaw:</strong> ${actor.details?.flaw || ''}</p>
-      </div>
-    `;
-    actorDiv.innerHTML = html;
-  })
-  .catch(err => {
-    actorDiv.innerHTML = `<p style="color:red;">Could not load actor: ${err}</p>`;
-    console.error(err);
-  });
+      // Currency
+      const c = actor.system.currency || {};
+      html += `<div class="section"><h2>Currency</h2>
+        <p>${c.pp || 0} pp, ${c.gp || 0} gp, ${c.sp || 0} sp, ${c.cp || 0} cp</p>
+      </div>`;
+
+      // Biography / alignment / bond / flaw / ideal
+      const details = actor.details || {};
+      html += `<div class="section"><h2>Biography</h2>${details.biography?.value || ''}</div>`;
+
+      html += `<div class="section"><h2>Character Traits</h2>
+        <p><strong>Ideal:</strong> ${details.ideal || ''}</p>
+        <p><strong>Bond:</strong> ${details.bond || ''}</p>
+        <p><strong>Flaw:</strong> ${details.flaw || ''}</p>
+        <p><strong>Alignment:</strong> ${details.alignment || ''}</p>
+      </div>`;
+
+      // Inventory
+      if (actor.items) {
+        html += `<div class="section"><h2>Inventory</h2><ul>`;
+        actor.items.forEach(item => {
+          html += `<li><strong>${item.name}</strong> (${item.type})</li>`;
+        });
+        html += `</ul></div>`;
+      }
+
+      // Spells
+      if (actor.system.spells) {
+        html += `<div class="section"><h2>Spells</h2><ul>`;
+        for (const [level, spell] of Object.entries(actor.system.spells)) {
+          html += `<li><strong>${level}:</strong> ${spell.value || 0}</li>`;
+        }
+        html += `</ul></div>`;
+      }
+
+      html += `</div>`; // end actor-sheet
+      actorDiv.innerHTML = html;
+    })
+    .catch(err => {
+      actorDiv.innerHTML = `<p style="color:red;">Could not load actor: ${err}</p>`;
+      console.error(err);
+    });
+}
 </script>
 </body>
 </html>
